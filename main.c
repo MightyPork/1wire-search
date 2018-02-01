@@ -8,7 +8,7 @@
 
 // ----------- DEMO -----------------
 
-void main(void)
+int main(void)
 {
     // The search algorithm stores its internal state in a struct.
 
@@ -41,6 +41,8 @@ void main(void)
         }
         printf("\n");
     }
+
+    return 0;
 }
 
 // ------------ SIMULATOR ---------------
@@ -71,7 +73,7 @@ struct owunit units[UNITS_COUNT] = {
     {.romcode = {0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0}},
 };
 
-bool rom_device_reset(struct owunit *device)
+void rom_device_reset(struct owunit *device)
 {
     device->rompos = 0;
     device->state = 0;
@@ -81,16 +83,19 @@ bool rom_device_reset(struct owunit *device)
 bool rom_device_read(struct owunit *device)
 {
     if (!device->selected) return true;
+    bool res = 0;
     if (device->state == 0) {
         device->state++;
-        bool res = ow_code_getbit(device->romcode, device->rompos);
+        res = ow_code_getbit(device->romcode, device->rompos);
         return res;
     }
     if (device->state == 1) {
         device->state++;
-        bool res = !ow_code_getbit(device->romcode, device->rompos);
+        res = !ow_code_getbit(device->romcode, device->rompos);
         return res;
     }
+
+    return res;
 }
 
 void rom_device_write(struct owunit *device, bool selectedbit)
@@ -132,5 +137,6 @@ void ow_write_bit(bool value)
 
 void ow_write_u8(uint8_t value)
 {
+    (void) value;
     // Dummy, do nothing
 }
