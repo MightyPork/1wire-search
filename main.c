@@ -16,7 +16,7 @@ int main(void)
     // than could fit in the address buffer.
 
     struct ow_search_state search_state;
-    ow_search_init(&search_state, 0xF0); // SEARCH_ROM
+    ow_search_init(&search_state, 0xF0 /* SEARCH_ROM */, false /* checksums */); 
 
     // Buffer for the found addresses - can have up to 65536 rows
     // Keep in mind that each address uses 8 bytes
@@ -57,7 +57,7 @@ struct owunit {
     int state;
 };
 
-#define UNITS_COUNT 12
+#define UNITS_COUNT 13
 struct owunit units[UNITS_COUNT] = {
     {.romcode = {0b00000000}},//00
     {.romcode = {0b00000001}},//01
@@ -71,6 +71,7 @@ struct owunit units[UNITS_COUNT] = {
     {.romcode = {0b11110111}},//f7
     {.romcode = {0xFF,0x00,0xFF,0x00,0x55,0x00,0xAA,0x00}},
     {.romcode = {0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0}},
+    {.romcode = {0x10,0x76,0xc7,0x04,0x01,0x08,0x00,0x71}}, // this is from a real 1-wire thermometer - checksum should be OK
 };
 
 void rom_device_reset(struct owunit *device)

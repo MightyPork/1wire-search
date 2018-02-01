@@ -75,6 +75,7 @@ struct ow_search_state {
     uint8_t command;
     enum ow_search_result status;
     bool first;
+    bool test_checksums;
 };
 
 /**
@@ -82,8 +83,9 @@ struct ow_search_state {
  *
  * @param[out] state - inited struct
  * @param[in] command - command to send for requesting the search (e.g. SEARCH_ROM)
+ * @param[in] test_checksums - verify checksums of all read romcodes
  */
-void ow_search_init(struct ow_search_state *state, uint8_t command);
+void ow_search_init(struct ow_search_state *state, uint8_t command, bool test_checksums);
 
 /**
  * Perform a search of the 1-wire bus, with a state struct pre-inited
@@ -100,5 +102,18 @@ void ow_search_init(struct ow_search_state *state, uint8_t command);
  * @return number of romcodes found. Search status is stored in state->status
  */
 uint16_t ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint16_t capacity);
+
+/**
+ * Compute a 1-wire type checksum.
+ * If the buffer includes the checksum, the result should be 0.
+ *
+ * (this function may be used externally, or you can delete the implementation
+ * from the c file if another implementation is already available)
+ *
+ * @param[in] buf - buffer of bytes to verify
+ * @param[in] len - buffer length
+ * @return checksum
+ */
+uint8_t ow_checksum(const uint8_t *buf, uint16_t len);
 
 #endif //OW_SEARCH_H

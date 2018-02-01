@@ -10,13 +10,47 @@
 
 #include "ow_search.h"
 
-void ow_search_init(struct ow_search_state *state, uint8_t command)
+// -------- CHECKSUM --------
+
+static inline uint8_t crc8_bits(uint8_t data)
+{
+    uint8_t crc = 0;
+    if(data & 1)     crc ^= 0x5e;
+    if(data & 2)     crc ^= 0xbc;
+    if(data & 4)     crc ^= 0x61;
+    if(data & 8)     crc ^= 0xc2;
+    if(data & 0x10)  crc ^= 0x9d;
+    if(data & 0x20)  crc ^= 0x23;
+    if(data & 0x40)  crc ^= 0x46;
+    if(data & 0x80)  crc ^= 0x8c;
+    return crc;
+}
+
+static uint8_t crc8_add(uint8_t cksum, uint8_t byte)
+{
+    return crc8_bits(byte ^ cksum);
+}
+
+uint8_t ow_checksum(const uint8_t *buff, uint16_t len)
+{
+    uint8_t cksum = 0;
+    for(uint16_t i = 0; i < len; i++) {
+        cksum = crc8_add(cksum, buff[i]);
+    }
+    return cksum;
+}
+
+// -----------------------------
+
+
+void ow_search_init(struct ow_search_state *state, uint8_t command, bool test_checksums)
 {
     state->prev_last_fork = 64;
     memset(state->prev_code, 0, 8);
     state->status = OW_SEARCH_MORE;
     state->command = command;
     state->first = true;
+    state->test_checksums = test_checksums;
 }
 
 uint16_t ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint16_t capacity)
@@ -77,10 +111,13 @@ uint16_t ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint1
             }
         }
 
-        // Record a found address
         memcpy(state->prev_code, code, 8);
-        memcpy(codes[found_devices], code, 8);
-        found_devices++;
+
+        if (!state->test_checksums || 0 == ow_checksum(code, 8)) {
+            // Record a found address
+            memcpy(codes[found_devices], code, 8);
+            found_devices++;
+        }
 
         // Stop condition
         if (last_fork == -1) {
