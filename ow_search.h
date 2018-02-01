@@ -78,7 +78,7 @@ struct ow_search_state {
 };
 
 /**
- * Init the state search struct
+ * Init the search algorithm state structure
  *
  * @param[out] state - inited struct
  * @param[in] command - command to send for requesting the search (e.g. SEARCH_ROM)
@@ -89,7 +89,10 @@ void ow_search_init(struct ow_search_state *state, uint8_t command);
  * Perform a search of the 1-wire bus, with a state struct pre-inited
  * using ow_search_init().
  *
- * Romcodes are stored in the byte arrays in a numerically ascending order.
+ * Romcodes are stored in the provided array in a numerically ascending order.
+ *
+ * This function may be called repeatedly to retrieve more addresses than could fit
+ * in the address buffer.
  *
  * @param[in,out] state - search state, used for multiple calls with limited buffer size
  * @param[out] codes - buffer for found romcodes
