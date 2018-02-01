@@ -1,5 +1,6 @@
 //
 // Created by MightyPork on 2018/02/01.
+// MIT license
 //
 
 #include <stdlib.h>
@@ -12,14 +13,13 @@
 void ow_search_init(struct ow_search_state *state, uint8_t command)
 {
     state->prev_last_fork = 64;
-    memset(&state->prev_code[0], 0, 8);
+    memset(state->prev_code, 0, 8);
     state->status = OW_SEARCH_MORE;
     state->command = command;
     state->first = true;
 }
 
-uint16_t
-ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint16_t capacity)
+uint16_t ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint16_t capacity)
 {
     if (state->status != OW_SEARCH_MORE) return 0;
 
@@ -38,6 +38,8 @@ ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint16_t capac
         // Send the search command (SEARCH_ROM, SEARCH_ALARM)
         ow_write_u8(state->command);
 
+        uint8_t *code_byte = &code[0];
+
         bool p, n;
         while (index != 64) {
             // Read a bit and its complement
@@ -47,8 +49,7 @@ ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint16_t capac
             if (!p && !n) {
                 // A fork: there are devices on the bus with different bit value
                 // (the bus is open-drain, in both cases one device pulls it low)
-                if ((found_devices > 0 || !state->first) &&
-                    index < state->prev_last_fork) {
+                if ((found_devices > 0 || !state->first) && index < state->prev_last_fork) {
                     // earlier than the last fork, take the same turn as before
                     p = ow_code_getbit(state->prev_code, index);
                     if (!p) last_fork = index; // remember for future runs, 1 not explored yet
@@ -67,15 +68,18 @@ ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint16_t capac
             }
 
             // All devices have a matching bit here, or it was resolved in a fork
-            if (p) ow_code_setbit(code, index);
+            if (p) *code_byte |= (1 << (index & 7));
             ow_write_bit(p);
+
             index++;
+            if((index & 7) == 0) {
+                code_byte++;
+            }
         }
 
         // Record a found address
-        for (int i = 0; i < 8; i++) {
-            state->prev_code[i] = codes[found_devices][i] = code[i];
-        }
+        memcpy(state->prev_code, code, 8);
+        memcpy(codes[found_devices], code, 8);
         found_devices++;
 
         // Stop condition
@@ -86,7 +90,8 @@ ow_search_run(struct ow_search_state *state, ow_romcode_t *codes, uint16_t capac
 
         state->prev_last_fork = last_fork;
     }
-    done:
+
+done:
     state->first = false;
     return found_devices;
 }

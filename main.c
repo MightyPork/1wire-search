@@ -10,29 +10,43 @@
 
 void main(void)
 {
+    // The search algorithm stores its internal state in a struct.
+
+    // This allows calling it repeatedly if there are more devices
+    // than could fit in the address buffer.
+
     struct ow_search_state search_state;
-    ow_search_init(&search_state, 0xFF); // the real onewire search command will go here when used with real hw
+    ow_search_init(&search_state, 0xF0); // SEARCH_ROM
 
-    ow_romcode_t addresses[4];
+    // Buffer for the found addresses - can have up to 65536 rows
+    // Keep in mind that each address uses 8 bytes
+    #define CODE_BUFFER_LEN 8
+    ow_romcode_t addresses[CODE_BUFFER_LEN];
 
-    int x=0;
+    // The algorithm stores its return value in the status field,
+    // we can loop until it becomes OW_SEARCH_DONE or OW_SEARCH_FAILED
     while (search_state.status == OW_SEARCH_MORE) {
-        uint16_t count = ow_search_run(&search_state, addresses, 4);
+        // Perform a run of the algorithm
+        uint16_t count = ow_search_run(&search_state, addresses, CODE_BUFFER_LEN);
+
+        // Do something with the found addresses
         printf("Found %d addresses, status %d\n", count, search_state.status);
-        for(int i=0; i<count; i++) {
-            for(int j=0; j<8; j++) {
+        for (int i = 0; i < count; i++) {
+            printf("> ");
+            for (int j = 0; j < 8; j++) {
                 printf("%02x ", addresses[i][j]);
             }
-            printf("\n");
-            uint64_t numeric = *((uint64_t*)(void*)&addresses[i][0]);
-            printf("n = 0x%016"PRIx64"\n", numeric);
+            uint64_t numeric = ow_romcode_to_u64(addresses[i]);
+            printf(" (0x%016"PRIx64")\n", numeric);
         }
         printf("\n");
-        if(++x > 10) break;
     }
 }
 
 // ------------ SIMULATOR ---------------
+
+// A simple 1-wire bus simulation following the real behavior of bus devices
+// in the search operation.
 
 struct owunit {
     ow_romcode_t romcode;

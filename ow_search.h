@@ -1,5 +1,6 @@
 //
-// Created by MightyPork on 2018/02/01.
+// Created by MightyPork on 2018/02/01
+// MIT license
 //
 
 #ifndef OW_SEARCH_H
@@ -39,13 +40,21 @@ extern bool ow_read_bit(void);
 
 // --------------------------------------------------------------------------------------
 
-/** Data type holding one romcode */
+/**
+ * Data type holding a romcode
+ */
 typedef uint8_t ow_romcode_t[8];
 
-/** Get a bit from a romcode */
-#define ow_code_getbit(code, index) (bool)((code)[(index) / 8] & (1 << ((index) % 8)))
-/** Set a bit to 1 in a romcode */
-#define ow_code_setbit(code, index) ((code)[(index) / 8] |= (1 << ((index) % 8)))
+/**
+ * Get a single bit from a romcode
+ */
+#define ow_code_getbit(code, index) (bool)((code)[(index) >> 3] & (1 << ((index) & 7)))
+
+/**
+ * Convert to unsigned 64-bit integer
+ * (works only on little-endian systems - eg. OK on x86/x86_64, not on PowerPC)
+ */
+#define ow_romcode_to_u64(code) (*((uint64_t *) (void *)(code)))
 
 /**
  * States of the search algorithm
