@@ -16,7 +16,7 @@ int main(void)
     // than could fit in the address buffer.
 
     struct ow_search_state search_state;
-    ow_search_init(&search_state, 0xF0 /* SEARCH_ROM */, false /* checksums */); 
+    ow_search_init(&search_state, 0xF0 /* SEARCH_ROM */, false /* checksums */);
 
     // Buffer for the found addresses - can have up to 65536 rows
     // Keep in mind that each address uses 8 bytes

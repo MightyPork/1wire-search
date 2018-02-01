@@ -6,6 +6,9 @@
 #ifndef OW_SEARCH_H
 #define OW_SEARCH_H
 
+#include <stdint.h>
+#include <stdbool.h>
+
 // --------------------------------------------------------------------------------------
 
 // External API functions for interfacing the bus
